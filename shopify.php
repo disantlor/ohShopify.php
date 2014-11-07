@@ -72,6 +72,22 @@ class ShopifyClient {
 		return (is_array($response) and (count($response) > 0)) ? array_shift($response) : $response;
 	}
 
+	public function validateSignature($query)
+	{
+		if(!is_array($query) || empty($query['signature']) || !is_string($query['signature']))
+			return false;
+
+		foreach($query as $k => $v) {
+			if($k == 'signature') continue;
+			$signature[] = $k . '=' . $v;
+		}
+
+		sort($signature);
+		$signature = md5($this->secret . implode('', $signature));
+
+		return $query['signature'] == $signature;
+	}
+
 	private function curlHttpApiRequest($method, $url, $query='', $payload='', $request_headers=array())
 	{
 		$url = $this->curlAppendQuery($url, $query);
@@ -104,7 +120,7 @@ class ShopifyClient {
 		curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-		curl_setopt($ch, CURLOPT_USERAGENT, 'HAC');
+		curl_setopt($ch, CURLOPT_USERAGENT, 'ohShopify-php-api-client');
 		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
